@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../supabaseClient';
+import countries from 'i18n-iso-countries';
+import 'flag-icons/css/flag-icons.min.css';
 
 // Material-UI Icons
 import ShieldIcon from '@mui/icons-material/Shield';
@@ -53,6 +55,18 @@ interface EquipoConTorneos extends Equipo {
     torneos: Torneo[];
 }
 
+const CODIGOS_PAIS_ALTERNATIVOS: Record<string, string> = {
+    CHI: 'CL', CRO: 'HR', DEN: 'DK', ENG: 'GB', GER: 'DE', GUA: 'GT',
+    HON: 'HN', KSA: 'SA', NED: 'NL', PAR: 'PY', POR: 'PT', RSA: 'ZA',
+    SUI: 'CH', UAE: 'AE', URU: 'UY',
+};
+
+const obtenerCodigoBandera = (codigoIso?: string) => {
+    const codigo = codigoIso?.trim().toUpperCase() || '';
+    if (/^[A-Z]{2}$/.test(codigo)) return codigo.toLowerCase();
+    return (CODIGOS_PAIS_ALTERNATIVOS[codigo] || countries.alpha3ToAlpha2(codigo) || '').toLowerCase();
+};
+
 export default function Equipos() {
     // DATOS
     const [equipos, setEquipos] = useState<EquipoConTorneos[]>([]);
@@ -74,6 +88,8 @@ export default function Equipos() {
     const [equipoId, setEquipoId] = useState('');
     const [nombre, setNombre] = useState('');
     const [paisId, setPaisId] = useState('');
+    const [paisDropdownAbierto, setPaisDropdownAbierto] = useState(false);
+    const [busquedaPais, setBusquedaPais] = useState('');
     const [torneosSeleccionados, setTorneosSeleccionados] = useState<string[]>([]);
 
     const [archivoEscudo, setArchivoEscudo] = useState<File | null>(null);
@@ -194,6 +210,10 @@ export default function Equipos() {
             return coincideBusqueda && coincidePais;
         });
     }, [equipos, busqueda, paisFiltro]);
+    const paisSeleccionado = paises.find((pais) => String(pais.id) === paisId);
+    const paisesFiltradosDropdown = paises.filter((pais) =>
+        pais.nombre.toLocaleLowerCase().includes(busquedaPais.trim().toLocaleLowerCase()),
+    );
 
     // ABRIR NUEVO
     const abrirNuevoEquipo = () => {
@@ -202,6 +222,8 @@ export default function Equipos() {
         setEquipoId('');
         setNombre('');
         setPaisId('');
+        setPaisDropdownAbierto(false);
+        setBusquedaPais('');
         setTorneosSeleccionados([]);
 
         setArchivoEscudo(null);
@@ -218,6 +240,8 @@ export default function Equipos() {
         setEquipoId(equipo.id);
         setNombre(equipo.nombre);
         setPaisId(equipo.pais_id ? String(equipo.pais_id) : '');
+        setPaisDropdownAbierto(false);
+        setBusquedaPais('');
 
         setTorneosSeleccionados(equipo.torneos.map((torneo) => torneo.id));
 
@@ -237,6 +261,8 @@ export default function Equipos() {
         setEquipoId('');
         setNombre('');
         setPaisId('');
+        setPaisDropdownAbierto(false);
+        setBusquedaPais('');
         setTorneosSeleccionados([]);
 
         setArchivoEscudo(null);
@@ -783,7 +809,7 @@ export default function Equipos() {
 
                 {mostrarModal && (
                     <div
-                        className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+                        className="team-modal-backdrop position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
                         style={{
                             zIndex: 1055,
                             backgroundColor: 'rgba(7, 26, 51, 0.65)',
@@ -793,17 +819,10 @@ export default function Equipos() {
                         }}
                     >
                         <div
-                            className="card border-0 shadow-lg d-flex flex-column"
-                            style={{
-                                width: '100%',
-                                maxWidth: '820px',
-                                maxHeight: '90vh',
-                                borderRadius: '20px',
-                                overflow: 'hidden',
-                            }}
+                            className="team-modal-card card border-0 shadow-lg d-flex flex-column"
                         >
                             {/* MODAL HEADER (fijo arriba) */}
-                            <div className="card-header border-bottom py-3 px-4 bg-light d-flex align-items-center justify-content-between flex-shrink-0">
+                            <div className="team-modal-header card-header border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-shrink-0">
                                 <div className="d-flex align-items-center gap-2.5">
                                     <div
                                         className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white shadow-sm"
@@ -838,7 +857,7 @@ export default function Equipos() {
                                 style={{ flex: '1 1 auto', minHeight: 0, overflow: 'hidden' }}
                             >
                                 <div
-                                    className="p-4"
+                                    className="team-modal-body p-4"
                                     style={{
                                         overflowY: 'auto',
                                         flex: '1 1 auto',
@@ -848,7 +867,7 @@ export default function Equipos() {
 
                                     {/* SECCIÓN 1: INFORMACIÓN GENERAL */}
                                     <div className="mb-4">
-                                        <div className="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                                        <div className="team-modal-section-title d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
                                             <SportsSoccerIcon sx={{ fontSize: 20, color: '#0d6efd' }} />
                                             <h6 className="fw-bold mb-0 text-dark">Información General</h6>
                                         </div>
@@ -865,7 +884,6 @@ export default function Equipos() {
                                                     <input
                                                         type="text"
                                                         className="form-control border-start-0 ps-1"
-                                                        placeholder="Ej. Real Madrid, FC Barcelona, Boca Juniors"
                                                         value={nombre}
                                                         onChange={(e) => setNombre(e.target.value)}
                                                         required
@@ -881,19 +899,86 @@ export default function Equipos() {
                                                     <span className="input-group-text bg-light border-end-0 text-muted">
                                                         <PublicIcon sx={{ fontSize: 18 }} />
                                                     </span>
-                                                    <select
-                                                        className="form-select border-start-0 ps-1"
-                                                        value={paisId}
-                                                        onChange={(e) => setPaisId(e.target.value)}
-                                                        required
+                                                    <div
+                                                        className="team-country-picker position-relative flex-grow-1"
+                                                        onBlur={(event) => {
+                                                            if (
+                                                                !(event.relatedTarget instanceof Node) ||
+                                                                !event.currentTarget.contains(event.relatedTarget)
+                                                            ) {
+                                                                setPaisDropdownAbierto(false);
+                                                                setBusquedaPais('');
+                                                            }
+                                                        }}
                                                     >
-                                                        <option value="">Selecciona un país...</option>
-                                                        {paises.map((pais) => (
-                                                            <option key={pais.id} value={pais.id}>
-                                                                {pais.nombre}
-                                                            </option>
-                                                        ))}
-                                                    </select>
+                                                        <button
+                                                            type="button"
+                                                            className="team-country-trigger form-select border-start-0 ps-2"
+                                                            aria-haspopup="listbox"
+                                                            aria-expanded={paisDropdownAbierto}
+                                                            onClick={() => setPaisDropdownAbierto((abierto) => !abierto)}
+                                                        >
+                                                            {paisSeleccionado ? (
+                                                                <>
+                                                                    {obtenerCodigoBandera(paisSeleccionado.codigo_iso) ? (
+                                                                        <span
+                                                                            className={`fi fi-${obtenerCodigoBandera(paisSeleccionado.codigo_iso)}`}
+                                                                            aria-hidden="true"
+                                                                        />
+                                                                    ) : (
+                                                                        <PublicIcon sx={{ fontSize: 17, color: '#64748b' }} />
+                                                                    )}
+                                                                    <span className="text-truncate">{paisSeleccionado.nombre}</span>
+                                                                </>
+                                                            ) : (
+                                                                <span className="text-muted">Selecciona un país...</span>
+                                                            )}
+                                                        </button>
+                                                        {paisDropdownAbierto && (
+                                                            <div className="team-country-menu">
+                                                                <div className="team-country-search">
+                                                                    <input
+                                                                        type="search"
+                                                                        className="form-control"
+                                                                        placeholder="Buscar país..."
+                                                                        value={busquedaPais}
+                                                                        onChange={(e) => setBusquedaPais(e.target.value)}
+                                                                        autoFocus
+                                                                    />
+                                                                </div>
+                                                                <div role="listbox" aria-label="Países disponibles">
+                                                                    {paisesFiltradosDropdown.length ? (
+                                                                        paisesFiltradosDropdown.map((pais) => {
+                                                                            const codigoBandera = obtenerCodigoBandera(pais.codigo_iso);
+                                                                            return (
+                                                                                <button
+                                                                                    key={pais.id}
+                                                                                    type="button"
+                                                                                    role="option"
+                                                                                    aria-selected={String(pais.id) === paisId}
+                                                                                    className="team-country-option"
+                                                                                    onClick={() => {
+                                                                                        setPaisId(String(pais.id));
+                                                                                        setPaisDropdownAbierto(false);
+                                                                                        setBusquedaPais('');
+                                                                                    }}
+                                                                                >
+                                                                                    {codigoBandera ? (
+                                                                                        <span className={`fi fi-${codigoBandera}`} aria-hidden="true" />
+                                                                                    ) : (
+                                                                                        <PublicIcon sx={{ fontSize: 17, color: '#94a3b8' }} />
+                                                                                    )}
+                                                                                    <span>{pais.nombre}</span>
+                                                                                </button>
+                                                                            );
+                                                                        })
+                                                                    ) : (
+                                                                        <div className="team-country-empty">No se encontraron países.</div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -901,7 +986,7 @@ export default function Equipos() {
 
                                     {/* SECCIÓN 2: ESCUDO DEL EQUIPO */}
                                     <div className="mb-4">
-                                        <div className="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                                        <div className="team-modal-section-title d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
                                             <ShieldIcon sx={{ fontSize: 20, color: '#0d6efd' }} />
                                             <h6 className="fw-bold mb-0 text-dark">Escudo o Emblema</h6>
                                         </div>
@@ -992,7 +1077,7 @@ export default function Equipos() {
 
                                     {/* SECCIÓN 3: TORNEOS DONDE PARTICIPA */}
                                     <div>
-                                        <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                                        <div className="team-modal-section-title d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
                                             <div className="d-flex align-items-center gap-2">
                                                 <EmojiEventsIcon sx={{ fontSize: 20, color: '#f59e0b' }} />
                                                 <h6 className="fw-bold mb-0 text-dark">Competiciones Asociadas</h6>
@@ -1060,7 +1145,7 @@ export default function Equipos() {
                                 </div>
 
                                 {/* FOOTER (fijo abajo, siempre visible) */}
-                                <div className="border-top bg-light px-4 py-3 d-flex justify-content-end gap-2 flex-shrink-0">
+                                <div className="team-modal-footer border-top px-4 py-3 d-flex justify-content-end gap-2 flex-shrink-0">
                                     <button
                                         type="button"
                                         className="btn btn-outline-secondary d-inline-flex align-items-center gap-1.5 px-3 py-2"

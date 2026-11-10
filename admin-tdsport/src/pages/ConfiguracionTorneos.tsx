@@ -177,6 +177,7 @@ export default function ConfiguracionTorneos() {
                 </div>
             </div>
 
+            <div className="configuracion-torneos-content container-fluid px-3 px-md-4">
             <div className="card shadow-sm border-0 mb-4" style={{ borderRadius: '16px' }}>
                 <div className="card-body p-2.5">
                     <div className="d-flex flex-wrap gap-2">
@@ -343,6 +344,8 @@ export default function ConfiguracionTorneos() {
                         </div>
                     )}
                 </div>
+
+            </div>
 
                 {/* MODAL CREAR / EDITAR */}
                 {isModalOpen && (

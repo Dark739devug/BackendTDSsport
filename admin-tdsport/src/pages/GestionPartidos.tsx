@@ -649,7 +649,7 @@ export default function GestionPartidos() {
                                                 value={filtroJornada}
                                                 onChange={(e) => setFiltroJornada(e.target.value)}
                                             >
-                                                <option value="">Todas las jornadas / fases</option>
+                                                <option value="">Todas las jornadas</option>
                                                 {GRUPOS_JORNADAS.map((grupo) => (
                                                     <optgroup key={grupo.categoria} label={grupo.categoria}>
                                                         {grupo.opciones.map((op) => (
@@ -713,7 +713,7 @@ export default function GestionPartidos() {
                                     </div>
                                 ) : (
                                     <div className="table-responsive">
-                                        <table className="table table-hover align-middle mb-0">
+                                        <table className="table table-hover align-middle mb-0 gestion-partidos-table">
                                             <thead className="table-light">
                                                 <tr>
                                                     <th className="px-4">Fecha</th>
@@ -721,7 +721,7 @@ export default function GestionPartidos() {
                                                     <th className="text-center">Jornada</th>
                                                     <th className="text-center">Estadio</th>
                                                     <th className="text-center">Partido</th>
-                                                    <th className="text-center">Resultado</th>
+                                                    <th className="text-center">Goles</th>
                                                     <th>Estado</th>
                                                     <th className="text-center">Acciones</th>
                                                 </tr>
@@ -822,7 +822,7 @@ export default function GestionPartidos() {
                                                                         style={{ borderRadius: '8px', fontWeight: 600, fontSize: '0.82rem' }}
                                                                     >
                                                                         <EditIcon sx={{ fontSize: 15 }} />
-                                                                        <span>Editar</span>
+                                                                        <span></span>
                                                                     </button>
                                                                     <button
                                                                         className="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1 px-2.5 py-1.5 shadow-sm"
@@ -831,7 +831,7 @@ export default function GestionPartidos() {
                                                                         style={{ borderRadius: '8px', fontWeight: 600, fontSize: '0.82rem' }}
                                                                     >
                                                                         <DeleteOutlineIcon sx={{ fontSize: 15 }} />
-                                                                        <span>Eliminar</span>
+                                                                        <span></span>
                                                                     </button>
                                                                 </div>
                                                             </td>

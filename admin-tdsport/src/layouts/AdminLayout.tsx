@@ -8,7 +8,7 @@ export default function AdminLayout() {
             <Sidebar />
             <InactivityHandler />
 
-            <main className="flex-grow-1 overflow-auto">
+            <main className="admin-layout-main flex-grow-1 overflow-auto">
                 <Outlet />
             </main>
         </div>
